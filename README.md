@@ -12,45 +12,19 @@ Seminar om Embedded C Programming Design Patterns
 - If used in a correct place in a correct manner, they can prove to be a savior; or else they can result in a horrible mess of a code.
 
   
-
-1. Creational patterns
-
-  * Factory
-    - Static Factory
-    - Simple Factory
-    - Factory Method
-      + GoF
-      + two stage
-    - Abstract Factory
-      + GoF family objects
-      + two dimension
-      + three dimension
-  * Builder
-  * Prototype
-  * Singleton
-
-2. Structural patterns
-
-  * Adapter
-  * Bridge
-  * Composite
-  * Decorator
-  * Facade
-  * Flyweight
-  * Private Class Data
-  * Handle Body Idiom
-  * Proxy
-  * MVC
-
-3. Behavioral patterns
-
-  * Chain of Responsibility
-  * Command
-  * Interpreter
-  * Iterator
-  * Mediator
-  * Observer
-  * State
-  * Strategy
-  * Template Method
-  * Visitor
+Introduktion
+- Creational Patterns
+  - Object Patterns
+  - Opaque Pattern
+  - Singleton Pattern
+  - Factory Pattern
+- UML model
+- Struktur Patterns
+  - Callback Patterns
+  - Inheritance Pattern
+  - Virtual Patterns
+- Behavioral Patterns
+  - Return Value Patterns
+- Concurrency Patterns
+  - Spinlock Patterns
+  - Semaphore Pattern
