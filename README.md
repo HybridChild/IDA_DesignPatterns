@@ -1,5 +1,5 @@
 # Embedded-C-Programming-Design-Patterns
-Seminar om Embedded C Programming Design Patterns
+Seminar about Embedded C Programming Design Patterns
 
 ## [⚠️ Be Careful](https://github.com/kamranahmedse/design-patterns-for-humans#️-be-careful)
 
