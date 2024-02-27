@@ -17,18 +17,18 @@ void button_remove_callback(struct button* self) {
   self->callback = NULL;
 }
 
-void button_do_somethind(struct button* self) {
+void button_do_something(struct button* self) {
   if (self->callback) {
     self->callback->callback(self->callback);  // call the callback
   }
 }
 
 
+// example code
 void addTotal(struct button_callback* callback) {
-
+  // do something...
 }
 
-//
 int main()
 {
   struct button btn;
