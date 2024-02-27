@@ -3,7 +3,7 @@
  *
  *  Created on: Jul 1, 2021
  * @authors       : Gert Lauritsen
-*/
+ */
 
 #include "CAN.h"
 #include "FreeRTOS.h"
@@ -11,40 +11,40 @@
 #include "string.h"
 #include "Errors.h"
 
-
 /**** Definitions ****/
 #define CAN_DRIVER_TX_QUEUE_SIZE 100 /* Max number of CAN messages in the queue from the application to the CAN driver */
-#define CAN_DRIVER_RX_QUEUE_SIZE 50 /* Max number of CAN messages in the queue from the CAN driver to the application */
+#define CAN_DRIVER_RX_QUEUE_SIZE 50  /* Max number of CAN messages in the queue from the CAN driver to the application */
 
 static xQueueHandle _can_driver_tx0_queue;
 static xQueueHandle _can_driver_tx1_queue;
 static xQueueHandle _can_driver_rx_queue;
 
-extern CAN_HandleTypeDef hcan; //deklareret i main.c by Cubemx
+extern CAN_HandleTypeDef hcan; // deklareret i main.c by Cubemx
 
-//#include "stm32f3xx_hal_can.h"
-typedef enum {
+// #include "stm32f3xx_hal_can.h"
+typedef enum
+{
   CAN_OK = 0,
   CAN_ERROR_PASSIVE,
   CAN_ERROR_BUS_OFF
 } can_fault;
 
-
-//forward declaration---------------------------------------------------------------
-bool Can1_Send(can_msg_t msg);
+// forward declaration---------------------------------------------------------------
+bool CAN1_Send(can_msg_t msg);
 uint32_t TxMailbox;
 uint16_t MsgVarId(can_msg_t *msg);
 
-//Var dec---------------------------------------------------------------------------
-static can_fault errCAN1  = CAN_OK;
-static CALLBACK_FUNCTION_CAN_COM_RX_IN_APP CanRxCB; ///Rx callback function
+// Var dec---------------------------------------------------------------------------
+static can_fault errCAN1 = CAN_OK;
+static CALLBACK_FUNCTION_CAN_COM_RX_IN_APP CanRxCB; /// Rx callback function
 static CAN_TxMailbox1CompleteCallback TxComplete;
 BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 //----------------------------------------------------------------------------------
 
-void can_filter_init() {
-CAN_FilterTypeDef  sFilterConfig;
+void can_filter_init()
+{
+  CAN_FilterTypeDef sFilterConfig;
   sFilterConfig.FilterBank = 0;
   sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
   sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
@@ -65,24 +65,27 @@ CAN_FilterTypeDef  sFilterConfig;
 
 void can_driver_init(CALLBACK_FUNCTION_CAN_COM_RX_IN_APP cb)
 {
-  _can_driver_tx0_queue = xQueueCreate( CAN_DRIVER_TX_QUEUE_SIZE, sizeof(can_msg_t) );
-  _can_driver_tx1_queue = xQueueCreate( CAN_DRIVER_TX_QUEUE_SIZE, sizeof(can_msg_t) );
+  _can_driver_tx0_queue = xQueueCreate(CAN_DRIVER_TX_QUEUE_SIZE, sizeof(can_msg_t));
+  _can_driver_tx1_queue = xQueueCreate(CAN_DRIVER_TX_QUEUE_SIZE, sizeof(can_msg_t));
 
- if (cb)
-    CanRxCB=cb;
- else
-	_can_driver_rx_queue = xQueueCreate( CAN_DRIVER_RX_QUEUE_SIZE, sizeof(can_msg_t) );
+  if (cb)
+    CanRxCB = cb;
+  else
+    _can_driver_rx_queue = xQueueCreate(CAN_DRIVER_RX_QUEUE_SIZE, sizeof(can_msg_t));
 
   can_filter_init();
-  if (HAL_CAN_Start(&hcan)  != HAL_OK) {
-	    LT_Error_Handler();
+  if (HAL_CAN_Start(&hcan) != HAL_OK)
+  {
+    LT_Error_Handler();
   }
 
-  if (HAL_CAN_ActivateNotification(&hcan, CAN_IT_TX_MAILBOX_EMPTY) != HAL_OK) {
-	    LT_Error_Handler();
+  if (HAL_CAN_ActivateNotification(&hcan, CAN_IT_TX_MAILBOX_EMPTY) != HAL_OK)
+  {
+    LT_Error_Handler();
   }
-  if (HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK) {
-	    LT_Error_Handler();
+  if (HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO0_MSG_PENDING) != HAL_OK)
+  {
+    LT_Error_Handler();
   }
   //  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
 
@@ -91,74 +94,80 @@ void can_driver_init(CALLBACK_FUNCTION_CAN_COM_RX_IN_APP cb)
   CanIsInitialized = true;
 }
 
-void SetCanTxComplet(CAN_TxMailbox1CompleteCallback cb) {
-	TxComplete=cb;
+void SetCanTxComplete(CAN_TxMailbox1CompleteCallback cb)
+{
+  TxComplete = cb;
 }
 //------------------------------------------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------------------------------------------
 
-
-
 /*!
-  @fn   	Can1_Send
+  @fn   	CAN1_Send
   @brief  Set data data in Q, if a mailbox is ready it is put in
     normal mod msg is put in mailboks 1, where as high priority msg is send with mailbox 0
   @param 	:	msg holds both the header, data and priority
 */
-
-bool Can1_Send(can_msg_t msg) {
+bool CAN1_Send(can_msg_t msg)
+{
   bool retVal = false;
   BaseType_t queueStatus;
-  if ( CanIsInitialized )  {
-	if (HAL_CAN_GetTxMailboxesFreeLevel(&hcan)>0) { //there is room in the mailboxes so we send it rigth away
-		retVal=HAL_CAN_AddTxMessage(&hcan, &msg.header , &msg.data[0], &TxMailbox) == HAL_OK;
-		send_out_count++;
-	}
-	else { //add message to q
-	  if (msg.LTCanPriority==0) {
+  if (CanIsInitialized)
+  {
+    if (HAL_CAN_GetTxMailboxesFreeLevel(&hcan) > 0)
+    { // there is room in the mailboxes so we send it rigth away
+      retVal = HAL_CAN_AddTxMessage(&hcan, &msg.TxHeader, &msg.data[0], &TxMailbox) == HAL_OK;
+      send_out_count++;
+    }
+    else
+    { // add message to q
+      if (msg.LTCanPriority == 0)
+      {
         queueStatus = xQueueSend(_can_driver_tx0_queue, &msg, 0); // no delay if queue is full, to prevent slow down rest of the system
-	  }
-	  else {
+      }
+      else
+      {
         queueStatus = xQueueSend(_can_driver_tx1_queue, &msg, 0); // no delay if queue is full, to prevent slow down rest of the system
-	  }
+      }
 
-      if ( queueStatus == errQUEUE_FULL )    {
+      if (queueStatus == errQUEUE_FULL)
+      {
         errCAN1 = CAN_ERROR_PASSIVE;
       }
-      else  {
+      else
+      {
         send_in_count++;
       }
-      if ( queueStatus == pdTRUE ){
-  	      retVal = true;
+      if (queueStatus == pdTRUE)
+      {
+        retVal = true;
       }
-	} //end set in queue
+    } // end set in queue
   }
   return retVal;
- }
+}
 
 /*!
  * @fn	CAN1_Receive
  * @params    can_msg_t
  * @brief Get a msg from msgq. Used if CB func is not used
  */
-
 bool CAN1_Receive(can_msg_t *ret)
 {
-   return ( CanIsInitialized && xQueueReceive(_can_driver_rx_queue, ret, 1 ) == pdTRUE );
+  return (CanIsInitialized && xQueueReceive(_can_driver_rx_queue, ret, 1) == pdTRUE);
 #ifdef ENABLE_CAN_RECEIVE_DEBUG
-   if (MsgVarId(ret) == filterVarId) {
-       printf("CAN1 rx-queued %#010x : %d : %02x %02x %02x %02x %02x %02x %02x %02x\n", ret->id, ret->dlc, ret->data[0], ret->data[1], ret->data[2], ret->data[3], ret->data[4], ret->data[5], ret->data[6], ret->data[7]);
-   }
+  if (MsgVarId(ret) == filterVarId)
+  {
+    printf("CAN1 rx-queued %#010x : %d : %02x %02x %02x %02x %02x %02x %02x %02x\n", ret->id, ret->dlc, ret->data[0], ret->data[1], ret->data[2], ret->data[3], ret->data[4], ret->data[5], ret->data[6], ret->data[7]);
+  }
 #endif
-
 }
 
 /*!
  * @fn    :	Get_CAN_Tx_Free_Buffer_Size
  * @params   :    -
  * @returns  :    Size of free tx buffer
-*/
+ */
 uint16_t Get_CAN_Tx_Free_Buffer_Size(void)
 {
   return uxQueueSpacesAvailable(_can_driver_tx1_queue);
@@ -170,38 +179,39 @@ uint16_t Get_CAN_Tx_Free_Buffer_Size(void)
  * @params   :    -
  * Function:    returns buffer counter value
  * @returns  :    buffer counter value
-*/
-uint16_t Get_CAN_Rx_Buffer_Cnt (void)
+ */
+uint16_t Get_CAN_Rx_Buffer_Cnt(void)
 {
   uint16_t buf_val;
   buf_val = uxQueueMessagesWaiting(_can_driver_rx_queue);
   return buf_val;
 }
 //-----------------------------------------------------------------------------
-//Can RxTx
+// Can RxTx
 //-----------------------------------------------------------------------------
 
 /*!
  * @fn 	:	Is_CAN_Ready reurn if can is init and there is no errors
  */
-bool Is_CAN_Ready (void) {
-    return CanIsInitialized && (errCAN1 == CAN_OK);
+bool Is_CAN_Ready(void)
+{
+  return CanIsInitialized && (errCAN1 == CAN_OK);
 }
-
 
 /*!
  * @fn 		:	HAL_CAN_RxFifo0MsgPendingCallback
  * @params 	:	handle to can
  * @returns :	if cb is not define msg is put in q
  */
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1) {
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
+{
   can_msg_t msg;
-  CanErrorCode=HAL_CAN_ERROR_NONE; //reset ErrorCode
-  HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &msg.Rxheader, &msg.data[0]);
+  CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
+  HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO0, &msg.RxHeader, &msg.data[0]);
   if (CanRxCB)
-	  CanRxCB(&msg);
+    CanRxCB(&msg);
   else
-	  xQueueSendFromISR( _can_driver_rx_queue, &msg, &xHigherPriorityTaskWoken  ); //put in Q}
+    xQueueSendFromISR(_can_driver_rx_queue, &msg, &xHigherPriorityTaskWoken); // put in Q}
 }
 
 /*!
@@ -209,14 +219,15 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1) {
  * @params 	:	handle to can
  * @returns :	if cb is not define msg is put in q
  */
-void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan1) {
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan1)
+{
   can_msg_t msg;
-  CanErrorCode=HAL_CAN_ERROR_NONE; //reset ErrorCode
-  HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO1, &msg.Rxheader, &msg.data[0]);
+  CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
+  HAL_CAN_GetRxMessage(hcan1, CAN_RX_FIFO1, &msg.RxHeader, &msg.data[0]);
   if (CanRxCB)
-	  CanRxCB(&msg);
+    CanRxCB(&msg);
   else
-	  xQueueSendFromISR( _can_driver_rx_queue, &msg, &xHigherPriorityTaskWoken  ); //put in Q
+    xQueueSendFromISR(_can_driver_rx_queue, &msg, &xHigherPriorityTaskWoken); // put in Q
 }
 
 /*!
@@ -225,16 +236,17 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan1) {
  * @returns :	none
  * @brief	: 	Checks Q for new msg, and send them. Takes Hi priority msg first
  */
-
-void CheckCANNewMsg() {
+void CheckCANNewMsg()
+{
   can_msg_t msg;
-  if (xQueueReceive(_can_driver_tx0_queue, (void *)&msg, 0) == pdTRUE) { //check if there is something in the buffer
-    HAL_CAN_AddTxMessage(&hcan,&msg.header, &msg.data[0],&TxMailbox);
+  if (xQueueReceive(_can_driver_tx0_queue, (void *)&msg, 0) == pdTRUE)
+  { // check if there is something in the buffer
+    HAL_CAN_AddTxMessage(&hcan, &msg.TxHeader, &msg.data[0], &TxMailbox);
     send_out_count++;
   }
-  else
-  if (xQueueReceive(_can_driver_tx1_queue, (void *)&msg, 0) == pdTRUE) { //check if there is something in the buffer
-    HAL_CAN_AddTxMessage(&hcan,&msg.header, &msg.data[0],&TxMailbox);
+  else if (xQueueReceive(_can_driver_tx1_queue, (void *)&msg, 0) == pdTRUE)
+  { // check if there is something in the buffer
+    HAL_CAN_AddTxMessage(&hcan, &msg.TxHeader, &msg.data[0], &TxMailbox);
     send_out_count++;
   }
 }
@@ -244,9 +256,11 @@ void CheckCANNewMsg() {
  * @params 	:	handle to can
  * @returns :	none
  */
-void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan1) {
-  CanErrorCode=HAL_CAN_ERROR_NONE; //reset ErrorCode
-  if (TxComplete) TxComplete(hcan1);
+void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan1)
+{
+  CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
+  if (TxComplete)
+    TxComplete(hcan1);
 }
 
 /*!
@@ -254,14 +268,18 @@ void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan1) {
  * @params 	:	handle to can
  * @returns :	none
  */
-void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan1){
-	CanErrorCode=HAL_CAN_ERROR_NONE; //reset ErrorCode
-	if (TxComplete) TxComplete(hcan1);
+void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan1)
+{
+  CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
+  if (TxComplete)
+    TxComplete(hcan1);
 }
 
-void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan1){
-	CanErrorCode=HAL_CAN_ERROR_NONE; //reset ErrorCode
-	if (TxComplete) TxComplete(hcan1);
+void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan1)
+{
+  CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
+  if (TxComplete)
+    TxComplete(hcan1);
 }
 
 /*!
@@ -275,13 +293,14 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan1){
  * interrupt flag, otherwise the reception stops once the error-flag is set. Best way would be to make use of the
  *  HAL_CAN_ErrorCallback() weak-handler function where we can clear the error-flag and enable the CAN Rx interrupt.
  */
-void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *canHandle) {
-	CanErrorCode=canHandle->ErrorCode;
-	canHandle->ErrorCode=HAL_CAN_ERROR_NONE; //reset errorscodes
-/*	xQueueReset(_can_driver_tx0_queue);      //clear CAN Q
-	xQueueReset(_can_driver_tx1_queue);
-	if (_can_driver_rx_queue)
-	  xQueueReset(_can_driver_rx_queue);*/
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *canHandle)
+{
+  CanErrorCode = canHandle->ErrorCode;
+  canHandle->ErrorCode = HAL_CAN_ERROR_NONE; // reset errorscodes
+  /*	xQueueReset(_can_driver_tx0_queue);      //clear CAN Q
+    xQueueReset(_can_driver_tx1_queue);
+    if (_can_driver_rx_queue)
+      xQueueReset(_can_driver_rx_queue);*/
 }
 
 //----------------------------------------------------------------------------------------------------------------
@@ -292,7 +311,7 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *canHandle) {
  * @params 	:	can_msg_t struct with CAN msg
  * @returns :	VarID
  */
-
-uint16_t MsgVarId(can_msg_t *msg) {
-	return (((uint16_t)(msg->data[2] & 0x0F)) << 8) | msg->data[3];
+uint16_t MsgVarId(can_msg_t *msg)
+{
+  return (((uint16_t)(msg->data[2] & 0x0F)) << 8) | msg->data[3];
 }

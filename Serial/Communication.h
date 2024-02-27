@@ -15,19 +15,20 @@
 //--------------------------------------------------------------------------------------
 #define HeaderSize 4
 #define TxBuffSize 250
-#define RxBuffSize          30
+#define RxBuffSize 30
 
-typedef struct {
-  uint8_t RxReady; //indikation af data der er klar til behandling
+typedef struct
+{
+  uint8_t RxReady; // indikation af data der er klar til behandling
   uint8_t Rxbuffer[RxBuffSize];
   uint8_t pRx;
   uint8_t RxState;
-
 } Rxbuff;
 //--------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------
 Rxbuff uart;
+
 void TxRawframe(volatile uint8_t *data, uint16_t frametype, int Datasize);
 void initCom1();
 
