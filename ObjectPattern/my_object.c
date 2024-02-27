@@ -7,6 +7,6 @@ struct application {
 };
 
 // application_init sets up its my_object member via my_object_init
-int application_init(struct application *self) {
+int application_init(struct application* self) {
   return my_object_init(&self->obj);
 }

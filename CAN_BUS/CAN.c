@@ -32,7 +32,7 @@ typedef enum
 // forward declaration---------------------------------------------------------------
 bool CAN1_Send(can_msg_t msg);
 uint32_t TxMailbox;
-uint16_t MsgVarId(can_msg_t *msg);
+uint16_t MsgVarId(can_msg_t* msg);
 
 // Var dec---------------------------------------------------------------------------
 static can_fault errCAN1 = CAN_OK;
@@ -152,7 +152,7 @@ bool CAN1_Send(can_msg_t msg)
  * @params    can_msg_t
  * @brief Get a msg from msgq. Used if CB func is not used
  */
-bool CAN1_Receive(can_msg_t *ret)
+bool CAN1_Receive(can_msg_t* ret)
 {
   return (CanIsInitialized && xQueueReceive(_can_driver_rx_queue, ret, 1) == pdTRUE);
 #ifdef ENABLE_CAN_RECEIVE_DEBUG
@@ -203,7 +203,7 @@ bool Is_CAN_Ready(void)
  * @params 	:	handle to can
  * @returns :	if cb is not define msg is put in q
  */
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan1)
 {
   can_msg_t msg;
   CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
@@ -219,7 +219,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan1)
  * @params 	:	handle to can
  * @returns :	if cb is not define msg is put in q
  */
-void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan1)
+void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan1)
 {
   can_msg_t msg;
   CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
@@ -239,12 +239,12 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan1)
 void CheckCANNewMsg()
 {
   can_msg_t msg;
-  if (xQueueReceive(_can_driver_tx0_queue, (void *)&msg, 0) == pdTRUE)
+  if (xQueueReceive(_can_driver_tx0_queue, (void*)&msg, 0) == pdTRUE)
   { // check if there is something in the buffer
     HAL_CAN_AddTxMessage(&hcan, &msg.TxHeader, &msg.data[0], &TxMailbox);
     send_out_count++;
   }
-  else if (xQueueReceive(_can_driver_tx1_queue, (void *)&msg, 0) == pdTRUE)
+  else if (xQueueReceive(_can_driver_tx1_queue, (void*)&msg, 0) == pdTRUE)
   { // check if there is something in the buffer
     HAL_CAN_AddTxMessage(&hcan, &msg.TxHeader, &msg.data[0], &TxMailbox);
     send_out_count++;
@@ -256,7 +256,7 @@ void CheckCANNewMsg()
  * @params 	:	handle to can
  * @returns :	none
  */
-void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan1)
+void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef* hcan1)
 {
   CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
   if (TxComplete)
@@ -268,14 +268,14 @@ void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan1)
  * @params 	:	handle to can
  * @returns :	none
  */
-void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan1)
+void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef* hcan1)
 {
   CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
   if (TxComplete)
     TxComplete(hcan1);
 }
 
-void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan1)
+void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef* hcan1)
 {
   CanErrorCode = HAL_CAN_ERROR_NONE; // reset ErrorCode
   if (TxComplete)
@@ -293,7 +293,7 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan1)
  * interrupt flag, otherwise the reception stops once the error-flag is set. Best way would be to make use of the
  *  HAL_CAN_ErrorCallback() weak-handler function where we can clear the error-flag and enable the CAN Rx interrupt.
  */
-void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *canHandle)
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef* canHandle)
 {
   CanErrorCode = canHandle->ErrorCode;
   canHandle->ErrorCode = HAL_CAN_ERROR_NONE; // reset errorscodes
@@ -311,7 +311,7 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *canHandle)
  * @params 	:	can_msg_t struct with CAN msg
  * @returns :	VarID
  */
-uint16_t MsgVarId(can_msg_t *msg)
+uint16_t MsgVarId(can_msg_t* msg)
 {
   return (((uint16_t)(msg->data[2] & 0x0F)) << 8) | msg->data[3];
 }

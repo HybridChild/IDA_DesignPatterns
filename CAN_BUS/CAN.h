@@ -24,8 +24,8 @@ typedef struct
   uint8_t data[8];
 } can_msg_t;
 
-typedef bool (*CALLBACK_FUNCTION_CAN_COM_RX_IN_APP)(can_msg_t *msg);          /// Callback type for data
-typedef void (*CAN_TxMailbox1CompleteCallback)(CAN_HandleTypeDef *CANHandle); /// Callback for when a transmission has completed
+typedef bool (*CALLBACK_FUNCTION_CAN_COM_RX_IN_APP)(can_msg_t* msg);          /// Callback type for data
+typedef void (*CAN_TxMailbox1CompleteCallback)(CAN_HandleTypeDef* CANHandle); /// Callback for when a transmission has completed
 
 uint32_t send_in_count;  /// Number of msg in
 uint32_t send_out_count; /// Number of msg out
@@ -39,7 +39,7 @@ uint16_t Get_No_on_last_send_telegram_in(void);
 uint16_t Get_No_on_last_send_telegram_out(void);
 
 bool CAN1_Send(can_msg_t msg);
-bool CAN1_Receive(can_msg_t *ret);
+bool CAN1_Receive(can_msg_t* ret);
 
 uint16_t Get_CAN_Rx_Buffer_Cnt(void);
 uint16_t Get_CAN_Tx_Free_Buffer_Size(void);
